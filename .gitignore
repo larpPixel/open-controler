@@ -1,0 +1,46 @@
+# Build directories
+build/
+build-android/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+cmake-build-*/
+
+# Qt generated
+.qrc/
+.rcc/
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+qrc_*.h
+*.pro.user
+*.pro.user.*
+
+# Android
+android-build/
+*.apk
+*.apk.idsig
+*.aab
+local.properties
+gradlew
+gradlew.bat
+gradle/
+build/
+gen/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
