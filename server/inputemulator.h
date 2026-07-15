@@ -25,4 +25,5 @@ private:
 
     int m_fd = -1;
     struct uinput_setup m_usetup {};
+    QRC::InputState m_lastState {};
 };

@@ -139,15 +139,35 @@ void InputEmulator::processInput(const QRC::InputState &state)
     if (m_fd < 0)
         return;
 
+    bool changed = false;
+
     // Joysticks
-    emitEvent(EV_ABS, ABS_X,  state.leftStickX);
-    emitEvent(EV_ABS, ABS_Y,  state.leftStickY);
-    emitEvent(EV_ABS, ABS_RX, state.rightStickX);
-    emitEvent(EV_ABS, ABS_RY, state.rightStickY);
+    if (state.leftStickX != m_lastState.leftStickX) {
+        emitEvent(EV_ABS, ABS_X, state.leftStickX);
+        changed = true;
+    }
+    if (state.leftStickY != m_lastState.leftStickY) {
+        emitEvent(EV_ABS, ABS_Y, state.leftStickY);
+        changed = true;
+    }
+    if (state.rightStickX != m_lastState.rightStickX) {
+        emitEvent(EV_ABS, ABS_RX, state.rightStickX);
+        changed = true;
+    }
+    if (state.rightStickY != m_lastState.rightStickY) {
+        emitEvent(EV_ABS, ABS_RY, state.rightStickY);
+        changed = true;
+    }
 
     // Triggers
-    emitEvent(EV_ABS, ABS_Z,  state.leftTrigger);
-    emitEvent(EV_ABS, ABS_RZ, state.rightTrigger);
+    if (state.leftTrigger != m_lastState.leftTrigger) {
+        emitEvent(EV_ABS, ABS_Z, state.leftTrigger);
+        changed = true;
+    }
+    if (state.rightTrigger != m_lastState.rightTrigger) {
+        emitEvent(EV_ABS, ABS_RZ, state.rightTrigger);
+        changed = true;
+    }
 
     // D-pad via HAT
     int hatX = 0, hatY = 0;
@@ -155,26 +175,58 @@ void InputEmulator::processInput(const QRC::InputState &state)
     if (state.buttons & QRC::Btn::Right) hatX =  1;
     if (state.buttons & QRC::Btn::Up)    hatY = -1;
     if (state.buttons & QRC::Btn::Down)  hatY =  1;
-    emitEvent(EV_ABS, ABS_HAT0X, hatX);
-    emitEvent(EV_ABS, ABS_HAT0Y, hatY);
 
-    // Buttons
-    emitEvent(EV_KEY, BTN_A,      (state.buttons & QRC::Btn::A)      ? 1 : 0);
-    emitEvent(EV_KEY, BTN_B,      (state.buttons & QRC::Btn::B)      ? 1 : 0);
-    emitEvent(EV_KEY, BTN_X,      (state.buttons & QRC::Btn::X)      ? 1 : 0);
-    emitEvent(EV_KEY, BTN_Y,      (state.buttons & QRC::Btn::Y)      ? 1 : 0);
-    emitEvent(EV_KEY, BTN_TL,     (state.buttons & QRC::Btn::LB)     ? 1 : 0);
-    emitEvent(EV_KEY, BTN_TR,     (state.buttons & QRC::Btn::RB)     ? 1 : 0);
-    emitEvent(EV_KEY, BTN_START,  (state.buttons & QRC::Btn::Start)  ? 1 : 0);
-    emitEvent(EV_KEY, BTN_SELECT, (state.buttons & QRC::Btn::Select) ? 1 : 0);
-    emitEvent(EV_KEY, BTN_THUMBL, (state.buttons & QRC::Btn::L3)     ? 1 : 0);
-    emitEvent(EV_KEY, BTN_THUMBR, (state.buttons & QRC::Btn::R3)     ? 1 : 0);
+    int lastHatX = 0, lastHatY = 0;
+    if (m_lastState.buttons & QRC::Btn::Left)  lastHatX = -1;
+    if (m_lastState.buttons & QRC::Btn::Right) lastHatX =  1;
+    if (m_lastState.buttons & QRC::Btn::Up)    lastHatY = -1;
+    if (m_lastState.buttons & QRC::Btn::Down)  lastHatY =  1;
 
-    // Motion (only if enabled)
-    if (state.motionEnabled & QRC::Motion::AccelOnly) {
-        emitEvent(EV_ABS, ABS_TILT_X, state.accelX);
-        emitEvent(EV_ABS, ABS_TILT_Y, state.accelY);
+    if (hatX != lastHatX) {
+        emitEvent(EV_ABS, ABS_HAT0X, hatX);
+        changed = true;
+    }
+    if (hatY != lastHatY) {
+        emitEvent(EV_ABS, ABS_HAT0Y, hatY);
+        changed = true;
     }
 
-    emitSyn();
+    // Buttons
+    auto checkButton = [&](uint16_t mask, uint16_t keyBtn) {
+        bool curr = (state.buttons & mask);
+        bool prev = (m_lastState.buttons & mask);
+        if (curr != prev) {
+            emitEvent(EV_KEY, keyBtn, curr ? 1 : 0);
+            changed = true;
+        }
+    };
+
+    checkButton(QRC::Btn::A, BTN_A);
+    checkButton(QRC::Btn::B, BTN_B);
+    checkButton(QRC::Btn::X, BTN_X);
+    checkButton(QRC::Btn::Y, BTN_Y);
+    checkButton(QRC::Btn::LB, BTN_TL);
+    checkButton(QRC::Btn::RB, BTN_TR);
+    checkButton(QRC::Btn::Start, BTN_START);
+    checkButton(QRC::Btn::Select, BTN_SELECT);
+    checkButton(QRC::Btn::L3, BTN_THUMBL);
+    checkButton(QRC::Btn::R3, BTN_THUMBR);
+
+    // Motion
+    if (state.motionEnabled & QRC::Motion::AccelOnly) {
+        if (state.accelX != m_lastState.accelX) {
+            emitEvent(EV_ABS, ABS_TILT_X, state.accelX);
+            changed = true;
+        }
+        if (state.accelY != m_lastState.accelY) {
+            emitEvent(EV_ABS, ABS_TILT_Y, state.accelY);
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        emitSyn();
+    }
+
+    m_lastState = state;
 }
