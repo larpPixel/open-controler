@@ -1,13 +1,59 @@
 #pragma once
 
-#include <QObject>
-#include <QUdpSocket>
 #include <QTcpSocket>
+#include <QUdpSocket>
 #include <QTimer>
 #include <QElapsedTimer>
 #include <QHostAddress>
+#include <QThread>
+#include <QMutex>
 #include <QtQml/qqmlregistration.h>
 #include "protocol.h"
+
+class NetworkWorker : public QObject
+{
+    Q_OBJECT
+public:
+    explicit NetworkWorker(QObject *parent = nullptr);
+    ~NetworkWorker() override;
+
+    void updateState(const QRC::InputState &state);
+
+signals:
+    void ackReceived(int latencyMs);
+    void heartbeatReceived(int latencyMs);
+    void disconnectedFromServer();
+    void connectionError(const QString &reason);
+
+public slots:
+    void init(const QHostAddress &address, quint16 port, bool useTcp);
+    void stop();
+
+private slots:
+    void onReadyRead();
+    void onTcpReadyRead();
+    void onHeartbeat();
+    void onSendTimer();
+
+private:
+    void sendPacket(const QByteArray &data);
+    void processPacket(const QByteArray &packet);
+
+    QUdpSocket *m_socket = nullptr;
+    QTcpSocket *m_tcpSocket = nullptr;
+    QTimer *m_heartbeatTimer = nullptr;
+    QTimer *m_sendTimer = nullptr;
+    QElapsedTimer m_latencyTimer;
+
+    QHostAddress m_serverAddress;
+    quint16 m_serverPort = 0;
+    bool m_useTcp = false;
+    bool m_connected = false;
+    uint32_t m_sequenceNumber = 0;
+
+    QMutex m_mutex;
+    QRC::InputState m_currentState;
+};
 
 class ClientController : public QObject
 {
@@ -47,29 +93,13 @@ signals:
     void connectionFailed(const QString &reason);
     void serverConnected();
 
-private slots:
-    void onReadyRead();
-    void onTcpReadyRead();
-    void onHeartbeat();
-    void onSendTimer();
-
 private:
-    void sendPacket(const QByteArray &data);
-    void processPacket(const QByteArray &packet);
+    void pushState();
 
-    QUdpSocket *m_socket = nullptr;
-    QTcpSocket *m_tcpSocket = nullptr;
-    QTimer *m_heartbeatTimer = nullptr;
-    QTimer *m_sendTimer = nullptr;
-    QElapsedTimer m_latencyTimer;
-
-    QHostAddress m_serverAddress;
-    quint16 m_serverPort = 0;
+    QThread *m_workerThread = nullptr;
+    NetworkWorker *m_worker = nullptr;
 
     bool m_connected = false;
-    bool m_useTcp = false;
     int m_latencyMs = 0;
-    uint32_t m_sequenceNumber = 0;
-
     QRC::InputState m_currentState;
 };
