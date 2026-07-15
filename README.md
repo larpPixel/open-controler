@@ -12,12 +12,12 @@ Turn your Android phone into a wireless gamepad for your Linux PC. Connect insta
   ┌─────────────┐         UDP over LAN         ┌─────────────┐
   │   Linux PC  │ ◄══════════════════════════► │   Android   │
   │   (Server)  │   ~34 bytes @ 60Hz = 16KB/s  │   (Client)  │
-  │             │                               │             │
-  │  QR Code ──────── scanned by ──────────────► Camera      │
-  │  uinput     │                               │  Joysticks  │
-  │  Gamepad    │ ◄── input packets ──────────── Buttons     │
-  │             │                               │  Gyroscope  │
-  └─────────────┘                               └─────────────┘
+  │             │                              │             │
+  │  QR Code ────────── scanned by ───────────►|   Camera    │
+  │  uinput     │                              │  Joysticks  │
+  │  Gamepad    │ ◄── input packets ───────────|   Buttons   │
+  │             │                              │  Gyroscope  │
+  └─────────────┘                              └─────────────┘
 ```
 
 ## Features
