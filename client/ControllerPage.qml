@@ -233,8 +233,9 @@ Page {
                     border.width: 1
                 }
 
-                // D-pad buttons using MultiPointTouchArea for multitouch
+                // D-pad buttons
                 DpadButton {
+                    id: upBtn
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
                     anchors.topMargin: 6
@@ -245,6 +246,7 @@ Page {
                     onActiveChanged: updateButton(bitFlag, active)
                 }
                 DpadButton {
+                    id: downBtn
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 6
@@ -255,6 +257,7 @@ Page {
                     onActiveChanged: updateButton(bitFlag, active)
                 }
                 DpadButton {
+                    id: leftBtn
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: 6
@@ -265,6 +268,7 @@ Page {
                     onActiveChanged: updateButton(bitFlag, active)
                 }
                 DpadButton {
+                    id: rightBtn
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 6
@@ -280,6 +284,53 @@ Page {
                     anchors.centerIn: parent
                     width: 12; height: 12; radius: 6
                     color: "#333340"
+                }
+
+                MultiPointTouchArea {
+                    anchors.fill: parent
+                    minimumTouchPoints: 1
+                    maximumTouchPoints: 4
+
+                    touchPoints: [
+                        TouchPoint { id: dt1 },
+                        TouchPoint { id: dt2 },
+                        TouchPoint { id: dt3 },
+                        TouchPoint { id: dt4 }
+                    ]
+
+                    function updateDpadStates() {
+                        let up = false
+                        let down = false
+                        let left = false
+                        let right = false
+
+                        let points = [dt1, dt2, dt3, dt4]
+                        for (let i = 0; i < points.length; i++) {
+                            let tp = points[i]
+                            if (tp.pressed) {
+                                let tx = tp.x
+                                let ty = tp.y
+
+                                // Up button zone
+                                if (tx >= 30 && tx <= 110 && ty >= 0 && ty <= 56) up = true
+                                // Down button zone
+                                if (tx >= 30 && tx <= 110 && ty >= 84 && ty <= 140) down = true
+                                // Left button zone
+                                if (tx >= 0 && tx <= 56 && ty >= 30 && ty <= 110) left = true
+                                // Right button zone
+                                if (tx >= 84 && tx <= 140 && ty >= 30 && ty <= 110) right = true
+                            }
+                        }
+
+                        upBtn.active = up
+                        downBtn.active = down
+                        leftBtn.active = left
+                        rightBtn.active = right
+                    }
+
+                    onPressed: updateDpadStates()
+                    onUpdated: updateDpadStates()
+                    onReleased: updateDpadStates()
                 }
             }
         }
@@ -321,6 +372,7 @@ Page {
                 // Diamond layout
                 // Y (top)
                 FaceButton {
+                    id: yBtn
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
                     label: "Y"
@@ -330,6 +382,7 @@ Page {
                 }
                 // X (left)
                 FaceButton {
+                    id: xBtn
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     label: "X"
@@ -339,6 +392,7 @@ Page {
                 }
                 // B (right)
                 FaceButton {
+                    id: bBtn
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     label: "B"
@@ -348,12 +402,60 @@ Page {
                 }
                 // A (bottom)
                 FaceButton {
+                    id: aBtn
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     label: "A"
                     btnColor: controllerPage.neonGreen
                     bitFlag: 1  // Btn::A = 1<<0
                     onActiveChanged: updateButton(bitFlag, active)
+                }
+
+                MultiPointTouchArea {
+                    anchors.fill: parent
+                    minimumTouchPoints: 1
+                    maximumTouchPoints: 4
+
+                    touchPoints: [
+                        TouchPoint { id: tp1 },
+                        TouchPoint { id: tp2 },
+                        TouchPoint { id: tp3 },
+                        TouchPoint { id: tp4 }
+                    ]
+
+                    function updateFaceStates() {
+                        let yVal = false
+                        let aVal = false
+                        let xVal = false
+                        let bVal = false
+
+                        let points = [tp1, tp2, tp3, tp4]
+                        for (let i = 0; i < points.length; i++) {
+                            let tp = points[i]
+                            if (tp.pressed) {
+                                let tx = tp.x
+                                let ty = tp.y
+
+                                // Y zone (top)
+                                if (tx >= 35 && tx <= 115 && ty >= 0 && ty <= 60) yVal = true
+                                // A zone (bottom)
+                                if (tx >= 35 && tx <= 115 && ty >= 90 && ty <= 150) aVal = true
+                                // X zone (left)
+                                if (tx >= 0 && tx <= 60 && ty >= 35 && ty <= 115) xVal = true
+                                // B zone (right)
+                                if (tx >= 90 && tx <= 150 && ty >= 35 && ty <= 115) bVal = true
+                            }
+                        }
+
+                        yBtn.active = yVal
+                        aBtn.active = aVal
+                        xBtn.active = xVal
+                        bBtn.active = bVal
+                    }
+
+                    onPressed: updateFaceStates()
+                    onUpdated: updateFaceStates()
+                    onReleased: updateFaceStates()
                 }
             }
         }
@@ -491,7 +593,7 @@ Page {
 
         readonly property real stickRadius: width / 2
         readonly property real thumbRadius: 28
-        readonly property real deadZone: 0.08
+        readonly property real deadZone: 0.0
 
         Rectangle {
             id: stickBase
@@ -642,11 +744,6 @@ Page {
             scale: faceBg.scale
         }
 
-        MultiPointTouchArea {
-            anchors.fill: parent
-            onPressed: { faceBtn.active = true }
-            onReleased: { faceBtn.active = false }
-        }
     }
 
     // -------- D-Pad Button --------
@@ -682,11 +779,6 @@ Page {
         // Override the parent rotation — arrows are already correct
         rotation: 0
 
-        MultiPointTouchArea {
-            anchors.fill: parent
-            onPressed: { dpadBtn.active = true }
-            onReleased: { dpadBtn.active = false }
-        }
     }
 
     // -------- Shoulder / Generic Button --------
