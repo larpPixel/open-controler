@@ -198,13 +198,30 @@ Page {
             anchors.bottom: parent.bottom
             width: parent.width * 0.5
 
+            // --- LEFT ANALOG STICK ---
+            AnalogStick {
+                id: leftStick
+                anchors.left: parent.left
+                anchors.leftMargin: 60
+                anchors.top: parent.top
+                anchors.topMargin: 20
+                width: 160; height: 160
+                stickColor: controllerPage.neonCyan
+                isLeftStick: true
+                onPositionChanged: (xVal, yVal) => {
+                    controllerPage.leftStickX = xVal
+                    controllerPage.leftStickY = yVal
+                }
+                onClickedChanged: updateButton(4096, leftStick.clicked)  // L3 = 1<<12
+            }
+
             // --- D-PAD ---
             Item {
                 id: dpadArea
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: -20
-                anchors.top: parent.top
-                anchors.topMargin: 10
+                anchors.left: leftStick.right
+                anchors.leftMargin: 40
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 20
                 width: 140; height: 140
 
                 // D-pad background circle
@@ -265,23 +282,6 @@ Page {
                     color: "#333340"
                 }
             }
-
-            // --- LEFT ANALOG STICK ---
-            AnalogStick {
-                id: leftStick
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: -20
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                width: 150; height: 150
-                stickColor: controllerPage.neonCyan
-                isLeftStick: true
-                onPositionChanged: (xVal, yVal) => {
-                    controllerPage.leftStickX = xVal
-                    controllerPage.leftStickY = yVal
-                }
-                onClickedChanged: updateButton(4096, leftStick.clicked)  // L3 = 1<<12
-            }
         }
 
         // ===================== RIGHT SIDE =====================
@@ -292,13 +292,30 @@ Page {
             anchors.bottom: parent.bottom
             width: parent.width * 0.5
 
+            // --- RIGHT ANALOG STICK ---
+            AnalogStick {
+                id: rightStick
+                anchors.right: parent.right
+                anchors.rightMargin: 60
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 20
+                width: 160; height: 160
+                stickColor: controllerPage.neonRed
+                isLeftStick: false
+                onPositionChanged: (xVal, yVal) => {
+                    controllerPage.rightStickX = xVal
+                    controllerPage.rightStickY = yVal
+                }
+                onClickedChanged: updateButton(8192, rightStick.clicked)  // R3 = 1<<13
+            }
+
             // --- ABXY Buttons ---
             Item {
                 id: abxyArea
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 20
+                anchors.right: rightStick.left
+                anchors.rightMargin: 40
                 anchors.top: parent.top
-                anchors.topMargin: 10
+                anchors.topMargin: 20
                 width: 150; height: 150
 
                 // Diamond layout
@@ -338,23 +355,6 @@ Page {
                     bitFlag: 1  // Btn::A = 1<<0
                     onActiveChanged: updateButton(bitFlag, active)
                 }
-            }
-
-            // --- RIGHT ANALOG STICK ---
-            AnalogStick {
-                id: rightStick
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 20
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                width: 150; height: 150
-                stickColor: controllerPage.neonRed
-                isLeftStick: false
-                onPositionChanged: (xVal, yVal) => {
-                    controllerPage.rightStickX = xVal
-                    controllerPage.rightStickY = yVal
-                }
-                onClickedChanged: updateButton(8192, rightStick.clicked)  // R3 = 1<<13
             }
         }
     }
